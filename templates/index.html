@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Performance Classifier</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+    h2 { margin-bottom: 4px; }
+    p.sub { color: gray; font-size: 14px; margin-top: 0; }
+    hr { margin: 20px 0; }
+
+    .row { display: flex; gap: 16px; margin-bottom: 12px; }
+    .field { flex: 1; display: flex; flex-direction: column; }
+    label { font-size: 13px; margin-bottom: 4px; }
+    input, select {
+      padding: 7px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    button {
+      margin-top: 16px;
+      padding: 10px 28px;
+      background: #2c7be5;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    button:hover { background: #1a5fc4; }
+
+    #result { margin-top: 24px; padding: 16px; border: 1px solid #ddd; border-radius: 6px; display: none; }
+    #result h3 { margin: 0 0 10px; }
+    .label { display: inline-block; padding: 4px 14px; border-radius: 12px; color: white; font-weight: bold; font-size: 15px; }
+    .Fail      { background: #e05c5c; }
+    .Pass      { background: #f4a35f; }
+    .Good      { background: #2c7be5; }
+    .Excellent { background: #56c16a; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+    td { padding: 6px 8px; border-bottom: 1px solid #eee; }
+    td:last-child { text-align: right; }
+
+    #error { color: red; margin-top: 12px; font-size: 14px; display: none; }
+  </style>
+</head>
+<body>
+
+<h2>Student Math Performance Classifier</h2>
+<p class="sub">Logistic Regression — Grade Group: Fail / Pass / Good / Excellent</p>
+<hr>
+
+<form id="form">
+
+  <div class="row">
+    <div class="field">
+      <label>Sex</label>
+      <select name="sex"><option value="F">Female</option><option value="M">Male</option></select>
+    </div>
+    <div class="field">
+      <label>Age</label>
+      <input type="number" name="age" value="17" min="15" max="22">
+    </div>
+    <div class="field">
+      <label>Address (U=Urban, R=Rural)</label>
+      <select name="address"><option value="U">Urban</option><option value="R">Rural</option></select>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <label>Study Time (1=low, 4=high)</label>
+      <input type="number" name="studytime" value="2" min="1" max="4">
+    </div>
+    <div class="field">
+      <label>Past Failures (0–3)</label>
+      <input type="number" name="failures" value="0" min="0" max="3">
+    </div>
+    <div class="field">
+      <label>Absences</label>
+      <input type="number" name="absences" value="4" min="0" max="93">
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <label>G1 — First Period Grade (0–20)</label>
+      <input type="number" name="G1" value="10" min="0" max="20">
+    </div>
+    <div class="field">
+      <label>G2 — Second Period Grade (0–20)</label>
+      <input type="number" name="G2" value="10" min="0" max="20">
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <label>Mother Education (0–4)</label>
+      <input type="number" name="Medu" value="2" min="0" max="4">
+    </div>
+    <div class="field">
+      <label>Father Education (0–4)</label>
+      <input type="number" name="Fedu" value="2" min="0" max="4">
+    </div>
+    <div class="field">
+      <label>Family Support</label>
+      <select name="famsup"><option value="yes">Yes</option><option value="no">No</option></select>
+    </div>
+  </div>
+
+  <button type="submit">Predict</button>
+</form>
+
+<div id="error"></div>
+
+<div id="result">
+  <h3>Prediction Result</h3>
+  <span class="label" id="pred-label"></span>
+  <table id="prob-table"></table>
+</div>
+
+<script>
+  document.getElementById("form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    document.getElementById("result").style.display = "none";
+    document.getElementById("error").style.display  = "none";
+
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      const res  = await fetch("/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+
+      if (json.error) {
+        document.getElementById("error").textContent = "Error: " + json.error;
+        document.getElementById("error").style.display = "block";
+        return;
+      }
+
+      const pred = json.prediction;
+      const label = document.getElementById("pred-label");
+      label.textContent = pred;
+      label.className = "label " + pred;
+
+      const probs = json.probabilities;
+      const order = ["Fail", "Pass", "Good", "Excellent"];
+      let rows = "";
+      order.forEach(cls => {
+        rows += `<tr><td>${cls}</td><td>${(probs[cls] * 100).toFixed(1)}%</td></tr>`;
+      });
+      document.getElementById("prob-table").innerHTML = rows;
+      document.getElementById("result").style.display = "block";
+
+    } catch (err) {
+      document.getElementById("error").textContent = "Request failed: " + err;
+      document.getElementById("error").style.display = "block";
+    }
+  });
+</script>
+
+</body>
+</html>
