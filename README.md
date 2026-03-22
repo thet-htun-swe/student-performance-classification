@@ -7,6 +7,7 @@ Classify student math performance into four grade groups — **Fail / Pass / Goo
 ---
 
 ## Project Structure
+
 ```
 app/
 ├── student_performance.ipynb   # EDA, training, evaluation
@@ -24,6 +25,7 @@ app/
 ---
 
 ## Dataset
+
 - **Source:** [Kaggle — Student Performance Data Set](https://www.kaggle.com/datasets/ishandutta/student-performance-data-set)
 - **File used:** `student-mat.csv`
 - **Loaded via:** `kagglehub` inside the notebook
@@ -33,6 +35,7 @@ app/
 ## Workflow
 
 ### Step 1 — Set up environment
+
 ```bash
 conda create -n student-performance python=3.10 -y
 conda activate student-performance
@@ -41,6 +44,7 @@ pip install kagglehub
 ```
 
 ### Step 2 — Set Kaggle API token
+
 ```bash
 # Windows
 conda env config vars set KAGGLE_API_TOKEN=your_token_here
@@ -52,14 +56,17 @@ export KAGGLE_API_TOKEN=your_token_here
 ```
 
 ### Step 3 — Run the notebook
+
 Open and run all cells in `student_performance.ipynb`.  
 The notebook handles dataset download, EDA, preprocessing, cross-validation, training, and evaluation.  
 The last cell saves the model artifacts using `pickle`:
+
 ```
 model.pkl, scaler.pkl, encoder.pkl, columns.pkl
 ```
 
 ### Step 4 — Deploy with Docker
+
 ```bash
 # Build
 docker build -t student-classifier .
@@ -74,18 +81,13 @@ Access the app at: http://192.41.170.112:6391/
 
 ## Model Summary
 
-| Step | Detail |
-|---|---|
-| Algorithm | Logistic Regression |
-| Target | Grade Group (Fail / Pass / Good / Excellent) |
-| Validation | 5-Fold Stratified Cross-Validation |
-| Encoding | One-Hot with `drop_first=True` (categorical) + LabelEncoder (target) |
-| Scaling | StandardScaler (fit on train only) |
-| Class Weight | Balanced (handles class imbalance) |
+| Step         | Detail                                                               |
+| ------------ | -------------------------------------------------------------------- |
+| Algorithm    | Logistic Regression                                                  |
+| Target       | Grade Group (Fail / Pass / Good / Excellent)                         |
+| Validation   | 5-Fold Stratified Cross-Validation                                   |
+| Encoding     | One-Hot with `drop_first=True` (categorical) + LabelEncoder (target) |
+| Scaling      | StandardScaler (fit on train only)                                   |
+| Class Weight | Balanced (handles class imbalance)                                   |
 
 ---
-
-## Notes
-- Run the notebook **before** building the Docker image — the `.pkl` files must exist before `docker build`
-- Kaggle token is only needed when running the notebook, not at inference time
-- To stop the running container: `docker ps` → `docker stop <CONTAINER ID>`
